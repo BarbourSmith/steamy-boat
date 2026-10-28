@@ -2,7 +2,7 @@
 
 // Paste your Google Apps Script web app URL here (see README.md).
 // While this is blank, signups are only saved in your own browser (test mode).
-const SIGNUP_URL = "";
+const SIGNUP_URL = "https://script.google.com/macros/s/AKfycbw1wT-NcX9f3eFeGUPVjZyYntiwkT7LiG5Dr0hy32_AMA6kzHTpfkZxutEQ4lOBZgk/exec";
 
 const GATE_KEY = "steamy-boat-aboard";
 const LOCAL_SIGNUPS_KEY = "steamy-boat-test-signups";
