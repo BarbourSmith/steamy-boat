@@ -23,8 +23,8 @@
     <h2>sign up</h2>
     <p>For <b id="signup-date"></b>. <span id="spots" class="muted"></span></p>
     <p id="full-msg" class="box center" hidden>
-      This Wednesday is full. All six seats are taken.<br>
-      <span class="small muted">Check back next week, or text us to get on the waitlist.</span>
+      This Wednesday is full.<br>
+      <span class="small muted">Check back next week.</span>
     </p>
     <form id="signup" class="box">
       <div class="form-row">
@@ -87,6 +87,8 @@
     }
 
     showSpotsLeft(CAPACITY);
+    // Don't promise a number until the real count arrives.
+    document.getElementById("spots").textContent = "? seats left.";
     refreshSpots();
 
     document.getElementById("signup").addEventListener("submit", async (e) => {
