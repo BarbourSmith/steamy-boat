@@ -6,11 +6,12 @@
   <meta name="robots" content="noindex, nofollow">
   <title>steamy boat · the deck</title>
   <!-- Bump ?v= when assets change, so browsers don't mix a cached old file with a new page. -->
-  <link rel="stylesheet" href="../assets/style.css?v=3">
-  <script src="../assets/common.js?v=3"></script>
+  <link rel="stylesheet" href="../assets/style.css?v=4">
+  <script src="../assets/common.js?v=4"></script>
   <script>requireAboard();</script>
 </head>
 <body>
+  <div id="announce" class="announce" hidden></div>
   <div class="page">
 <pre class="steam">  )  )  )
  (  (  (
@@ -61,6 +62,14 @@
 
     document.getElementById("signup-date").textContent = prettyDate(WEDNESDAY);
     document.getElementById("test-mode").hidden = !testMode();
+
+    // ---- announcement ----
+    // Set from /stern; the bar stays hidden when it's blank or can't load.
+    fetchAnnouncement().then((text) => {
+      const bar = document.getElementById("announce");
+      bar.textContent = text;
+      bar.hidden = !text.trim();
+    }).catch(() => {});
 
     // ---- sign up ----
     // Party sizes only go up to the seats still open, and the form hides once it's full.

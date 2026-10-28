@@ -9,6 +9,7 @@ const CAPACITY = 6;
 
 const GATE_KEY = "steamy-boat-aboard";
 const LOCAL_SIGNUPS_KEY = "steamy-boat-test-signups";
+const LOCAL_ANNOUNCEMENT_KEY = "steamy-boat-test-announcement";
 
 function isAboard() {
   try { return localStorage.getItem(GATE_KEY) === "yes"; } catch (e) { return false; }
@@ -102,6 +103,23 @@ async function deleteSignup(signup) {
     action: "delete", row: signup.row, name: signup.name, wednesday: signup.wednesday,
   });
   if (!result.ok) throw new Error("delete rejected");
+}
+
+// The announcement shown at the top of the deck. Blank means no announcement.
+async function fetchAnnouncement() {
+  if (testMode()) return localStorage.getItem(LOCAL_ANNOUNCEMENT_KEY) || "";
+  const res = await fetch(SIGNUP_URL + "?announcement=1");
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return (await res.json()).announcement || "";
+}
+
+async function setAnnouncement(text) {
+  if (testMode()) {
+    localStorage.setItem(LOCAL_ANNOUNCEMENT_KEY, text.trim());
+    return;
+  }
+  const result = await postToBackend({ action: "announce", text });
+  if (!result.ok) throw new Error("announcement rejected");
 }
 
 function escapeHtml(s) {

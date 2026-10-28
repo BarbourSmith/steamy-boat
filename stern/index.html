@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>steamy boat · the stern</title>
-  <link rel="stylesheet" href="../assets/style.css?v=3">
-  <script src="../assets/common.js?v=3"></script>
+  <link rel="stylesheet" href="../assets/style.css?v=4">
+  <script src="../assets/common.js?v=4"></script>
   <script>requireAboard();</script>
 </head>
 <body>
@@ -19,6 +19,19 @@
       <code>assets/common.js</code> to see everyone's.
     </p>
 
+    <h2>announcement</h2>
+    <form id="announce-form" class="box">
+      <label for="announce-text" class="small muted">Shown in a bar at the top of the deck. Leave blank to hide it.</label>
+      <textarea id="announce-text" rows="2" maxlength="500" placeholder="loading&hellip;" disabled></textarea>
+      <div class="form-row">
+        <button type="submit" id="announce-save">save</button>
+        <button type="button" id="announce-clear">clear</button>
+        <span id="announce-msg" class="small muted"></span>
+      </div>
+    </form>
+
+    <hr>
+
     <div id="list">loading the manifest&hellip;</div>
 
     <p class="center"><button id="refresh">refresh</button></p>
@@ -28,6 +41,40 @@
 
   <script>
     document.getElementById("test-mode").hidden = !testMode();
+
+    // ---- announcement ----
+    const announceText = document.getElementById("announce-text");
+    const announceMsg = document.getElementById("announce-msg");
+
+    async function loadAnnouncement() {
+      try {
+        announceText.value = await fetchAnnouncement();
+        announceText.placeholder = "nothing posted";
+        announceText.disabled = false;
+      } catch (err) {
+        announceText.placeholder = "";
+        announceMsg.textContent = "Couldn't load the announcement.";
+      }
+    }
+
+    async function saveAnnouncement(text) {
+      announceMsg.textContent = "saving…";
+      try {
+        await setAnnouncement(text);
+        announceText.value = text.trim();
+        announceMsg.textContent = text.trim() ? "Posted." : "Cleared. The bar is hidden.";
+      } catch (err) {
+        announceMsg.textContent = "Couldn't save. Try again.";
+      }
+    }
+
+    document.getElementById("announce-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      saveAnnouncement(announceText.value);
+    });
+    document.getElementById("announce-clear").addEventListener("click", () => saveAnnouncement(""));
+
+    loadAnnouncement();
 
     function timeLabel(iso) {
       const d = new Date(iso);

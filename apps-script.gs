@@ -44,7 +44,16 @@ function readSignups_() {
     }));
 }
 
-function doGet() {
+// The announcement shown at the top of the deck, set from /stern. Blank hides it.
+function readAnnouncement_() {
+  return PropertiesService.getScriptProperties().getProperty("announcement") || "";
+}
+
+// ?announcement=1 returns { announcement }; otherwise the signup list.
+function doGet(e) {
+  if (e && e.parameter && e.parameter.announcement) {
+    return json_({ announcement: readAnnouncement_() });
+  }
   return json_(readSignups_());
 }
 
@@ -54,6 +63,7 @@ function doPost(e) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
+    if (d.action === "announce") return setAnnouncement_(d);
     return d.action === "delete" ? deleteSignup_(d) : addSignup_(d);
   } finally {
     lock.releaseLock();
@@ -89,4 +99,10 @@ function deleteSignup_(d) {
   }
   sheet_().deleteRow(row);
   return json_({ ok: true });
+}
+
+function setAnnouncement_(d) {
+  const text = String(d.text || "").trim().slice(0, 500);
+  PropertiesService.getScriptProperties().setProperty("announcement", text);
+  return json_({ ok: true, announcement: text });
 }

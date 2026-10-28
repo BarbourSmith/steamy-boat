@@ -124,6 +124,27 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   margin: 12px 0;
 }
 
+/* announcement bar across the top of the deck */
+.announce {
+  margin: -24px -16px 20px;
+  padding: 10px 16px;
+  background: var(--sage);
+  color: #fbf8f1;
+  text-align: center;
+  white-space: pre-line;
+}
+.announce::before { content: "~ "; }
+.announce::after  { content: " ~"; }
+
+textarea {
+  font: inherit;
+  color: var(--ink);
+  background: #fffdf8;
+  border: 1px inset var(--rule);
+  padding: 4px 6px;
+  width: 100%;
+}
+
 /* snapshots, framed like a print */
 .photo {
   margin: 20px 0;
