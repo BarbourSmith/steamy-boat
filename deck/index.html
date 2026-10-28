@@ -48,8 +48,7 @@
 
     <hr>
 
-    <h2>wind on the water</h2>
-    <p class="small muted">Forecast for Newport Shores, <span id="wind-date"></span>.</p>
+    <h2>wind on the water &ndash; <span id="wind-date"></span></h2>
     <div id="wind">loading the forecast&hellip;</div>
 
     <hr>
@@ -155,8 +154,7 @@
         const gust = daily.wind_gusts_10m_max[0];
         el.innerHTML = `
           <p>Looking <b>${windWord(max)}</b>: up to ${Math.round(max)} mph, gusts to ${Math.round(gust)}.
-          Sunset is at ${timeLabel(daily.sunset[0])}.</p>
-          <p class="small muted">forecast via <a href="https://open-meteo.com/">open-meteo</a></p>`;
+          Sunset is at ${timeLabel(daily.sunset[0])}.</p>`;
       } catch (err) {
         el.textContent = "Couldn't reach the forecast right now. Try refreshing in a bit.";
       }
