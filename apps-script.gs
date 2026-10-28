@@ -1,3 +1,8 @@
+/**
+ * @OnlyCurrentDoc
+ * Limits this script's permission to the one spreadsheet it's attached to.
+ */
+
 // Google Apps Script backend for steamy boat signups.
 // Setup steps are in README.md. Each signup becomes a row in the sheet:
 //   timestamp | wednesday | name | party
