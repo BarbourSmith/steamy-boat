@@ -1,0 +1,4 @@
+# Keep the photos out of image search.
+# Pages aren't blocked here on purpose: crawlers need to load them to see their noindex tag.
+User-agent: *
+Disallow: /Images/
