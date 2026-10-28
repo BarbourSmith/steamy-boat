@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>steamy boat</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="page gate">
+<pre class="steam">  )  )  )
+ (  (  (
+  )  )  )
+ _|_|_|_______
+ \  ~ ~ ~ ~  /
+~~\_________/~~~</pre>
+    <h1>steamy boat</h1>
+    <p class="tagline">a floating sauna on lake washington</p>
+
+    <form id="gate">
+      <label for="pw" class="small muted">what's the word?</label><br>
+      <input id="pw" type="password" autocomplete="off" autofocus>
+      <button type="submit">board</button>
+    </form>
+    <p class="whisper" id="whisper"></p>
+  </div>
+
+  <script src="assets/common.js"></script>
+  <script>
+    if (isAboard()) location.replace("deck/");
+
+    const whispers = [
+      "the water's cold out here. try again.",
+      "hmm, not quite.",
+      "ask whoever sent you the link.",
+    ];
+    let misses = 0;
+
+    document.getElementById("gate").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const pw = document.getElementById("pw");
+      if (pw.value.trim().toLowerCase() === "sauna") {
+        setAboard();
+        location.href = "deck/";
+      } else {
+        document.getElementById("whisper").textContent = whispers[misses++ % whispers.length];
+        pw.value = "";
+        pw.focus();
+      }
+    });
+  </script>
+</body>
+</html>

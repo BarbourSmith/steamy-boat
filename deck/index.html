@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>steamy boat · the deck</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="../assets/common.js"></script>
+  <script>requireAboard();</script>
+</head>
+<body>
+  <div class="page">
+<pre class="steam">  )  )  )
+ (  (  (
+ _|_|_|_______
+~~\_________/~~~</pre>
+    <h1>welcome aboard</h1>
+    <p class="tagline">sauna nights are wednesdays at newport shores</p>
+
+    <hr>
+
+    <h2>sign up</h2>
+    <p>For <b id="signup-date"></b>.</p>
+    <form id="signup" class="box">
+      <div class="form-row">
+        <label for="name">your name</label>
+        <input id="name" type="text" maxlength="60" required>
+      </div>
+      <div class="form-row">
+        <label for="party">party of</label>
+        <select id="party">
+          <option>1</option><option>2</option><option>3</option>
+          <option>4</option><option>5</option><option>6</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <button type="submit" id="signup-btn">count me in</button>
+      </div>
+      <p id="signup-msg" class="small" style="margin:6px 0 0"></p>
+    </form>
+    <p id="test-mode" class="notice" hidden>
+      test mode: signups are only saved in this browser until SIGNUP_URL is set in
+      <code>assets/common.js</code>.
+    </p>
+
+    <hr>
+
+    <h2>wind on the water</h2>
+    <p class="small muted">Forecast for Newport Shores, <span id="wind-date"></span>.</p>
+    <div id="wind">loading the forecast&hellip;</div>
+
+    <hr>
+
+    <h2>the basics</h2>
+    <ul>
+      <li><b>When:</b> Wednesday evenings, around sunset. Times get confirmed by text.</li>
+      <li><b>Where:</b> We push off from Newport Shores in Bellevue. You'll get the exact spot when you sign up.</li>
+      <li><b>Bring:</b> a swimsuit, a towel or two, water, and warm layers for the ride home.</li>
+      <li><b>Nice to have:</b> sandals, a hat for the sauna, and a snack to share.</li>
+      <li><b>Plunging:</b> totally optional. The lake is right there.</li>
+      <li><b>Weather:</b> if the wind is too much we'll call it, and you'll hear from us by text.</li>
+    </ul>
+
+    <div class="footer">
+      <p>~ this page is made by hand ~<br>
+      <a href="../" id="leave">leave the boat</a></p>
+    </div>
+  </div>
+
+  <script>
+    const WEDNESDAY = upcomingWednesday();
+    const LAT = 47.5655, LON = -122.1893; // Newport Shores, Bellevue WA
+
+    document.getElementById("signup-date").textContent = prettyDate(WEDNESDAY);
+    document.getElementById("wind-date").textContent = prettyDate(WEDNESDAY);
+    document.getElementById("test-mode").hidden = !testMode();
+
+    document.getElementById("leave").addEventListener("click", () => {
+      try { localStorage.removeItem(GATE_KEY); } catch (e) {}
+    });
+
+    // ---- sign up ----
+    document.getElementById("signup").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const party = Number(document.getElementById("party").value);
+      const msg = document.getElementById("signup-msg");
+      const btn = document.getElementById("signup-btn");
+      if (!name) return;
+
+      btn.disabled = true;
+      msg.textContent = "sending…";
+      try {
+        await addSignup({ wednesday: WEDNESDAY, name, party });
+        msg.textContent = `See you on the water, ${name}! (party of ${party})`;
+        e.target.reset();
+      } catch (err) {
+        msg.textContent = "Something went sideways. Try again, or just text us.";
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // ---- wind forecast ----
+    function windWord(mph) {
+      if (mph < 6) return "glassy";
+      if (mph < 11) return "light breeze";
+      if (mph < 16) return "breezy";
+      if (mph < 22) return "choppy";
+      return "rough";
+    }
+
+    function compass(deg) {
+      const pts = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+      return pts[Math.round(deg / 22.5) % 16];
+    }
+
+    function hourLabel(iso) {
+      const h = Number(iso.slice(11, 13));
+      return `${h % 12 || 12} ${h < 12 ? "am" : "pm"}`;
+    }
+
+    async function loadWind() {
+      const el = document.getElementById("wind");
+      const url = "https://api.open-meteo.com/v1/forecast"
+        + `?latitude=${LAT}&longitude=${LON}`
+        + "&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m"
+        + "&daily=wind_speed_10m_max,wind_gusts_10m_max,sunset"
+        + "&wind_speed_unit=mph&temperature_unit=fahrenheit&timezone=America%2FLos_Angeles"
+        + `&start_date=${WEDNESDAY}&end_date=${WEDNESDAY}`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        const h = data.hourly;
+        const sunset = data.daily.sunset[0];
+
+        // Afternoon into evening: 3pm through 10pm.
+        const rows = [];
+        for (let i = 0; i < h.time.length; i++) {
+          const hour = Number(h.time[i].slice(11, 13));
+          if (hour < 15 || hour > 22) continue;
+          const dir = h.wind_direction_10m[i];
+          rows.push(`<tr>
+            <td>${hourLabel(h.time[i])}</td>
+            <td class="num">${Math.round(h.wind_speed_10m[i])}</td>
+            <td class="num">${Math.round(h.wind_gusts_10m[i])}</td>
+            <td><span class="arrow" style="transform:rotate(${dir + 180}deg)">&uarr;</span> ${compass(dir)}</td>
+            <td class="num">${Math.round(h.temperature_2m[i])}&deg;</td>
+          </tr>`);
+        }
+
+        const max = data.daily.wind_speed_10m_max[0];
+        const gust = data.daily.wind_gusts_10m_max[0];
+        el.innerHTML = `
+          <p>Looking <b>${windWord(max)}</b>: up to ${Math.round(max)} mph, gusts to ${Math.round(gust)}.
+          Sunset is at ${hourLabel(sunset).replace(" ", sunset.slice(13, 16) + " ")}.</p>
+          <table>
+            <tr><th>time</th><th class="num">wind</th><th class="num">gusts</th><th>from</th><th class="num">air</th></tr>
+            ${rows.join("")}
+          </table>
+          <p class="small muted">mph &middot; forecast via <a href="https://open-meteo.com/">open-meteo</a></p>`;
+      } catch (err) {
+        el.textContent = "Couldn't reach the forecast right now. Try refreshing in a bit.";
+      }
+    }
+
+    loadWind();
+  </script>
+</body>
+</html>

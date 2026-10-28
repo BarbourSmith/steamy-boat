@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>steamy boat · the stern</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="../assets/common.js"></script>
+  <script>requireAboard();</script>
+</head>
+<body>
+  <div class="page">
+    <h1>the stern</h1>
+    <p class="tagline">who's coming aboard</p>
+
+    <p id="test-mode" class="notice" hidden>
+      test mode: showing signups saved in this browser only. Set SIGNUP_URL in
+      <code>assets/common.js</code> to see everyone's.
+    </p>
+
+    <div id="list">loading the manifest&hellip;</div>
+
+    <p class="center"><button id="refresh">refresh</button></p>
+
+    <div class="footer"><a href="../deck/">back to the deck</a></div>
+  </div>
+
+  <script>
+    document.getElementById("test-mode").hidden = !testMode();
+
+    function timeLabel(iso) {
+      const d = new Date(iso);
+      return isNaN(d) ? "" : d.toLocaleString(undefined, {
+        month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+      });
+    }
+
+    function section(date, people, isPast) {
+      const total = people.reduce((n, p) => n + Number(p.party || 0), 0);
+      const rows = people.map((p) => `<tr>
+          <td>${escapeHtml(p.name)}</td>
+          <td class="num">${Number(p.party) || ""}</td>
+          <td class="small muted">${timeLabel(p.timestamp)}</td>
+        </tr>`).join("");
+      return `<h2>${prettyDate(date)}</h2>
+        <p${isPast ? ' class="muted"' : ""}><b>${total}</b> ${total === 1 ? "person" : "people"}
+          across ${people.length} ${people.length === 1 ? "signup" : "signups"}${isPast ? " (past)" : ""}</p>
+        <table>
+          <tr><th>name</th><th class="num">party</th><th>signed up</th></tr>
+          ${rows}
+        </table>`;
+    }
+
+    async function load() {
+      const el = document.getElementById("list");
+      el.textContent = "loading the manifest…";
+      try {
+        const signups = await fetchSignups();
+        if (!signups.length) {
+          el.innerHTML = "<p class='center muted'>Nobody yet. The sauna is lonely.</p>";
+          return;
+        }
+
+        const byDate = {};
+        for (const s of signups) (byDate[s.wednesday] ||= []).push(s);
+
+        const today = isoDate(new Date());
+        const upcoming = Object.keys(byDate).filter((d) => d >= today).sort();
+        const past = Object.keys(byDate).filter((d) => d < today).sort().reverse();
+
+        el.innerHTML = upcoming.map((d) => section(d, byDate[d], false)).join("")
+          + (past.length ? "<hr>" + past.map((d) => section(d, byDate[d], true)).join("") : "");
+      } catch (err) {
+        el.textContent = "Couldn't load signups. Check SIGNUP_URL, or try again.";
+      }
+    }
+
+    document.getElementById("refresh").addEventListener("click", load);
+    load();
+  </script>
+</body>
+</html>
