@@ -124,12 +124,13 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   margin: 12px 0;
 }
 
-/* announcement bar across the top of the deck */
+/* announcement bar under the deck's heading */
 .announce {
-  margin: -24px -16px 20px;
-  padding: 10px 16px;
+  margin: 16px 0 0;
+  padding: 12px 16px;
   background: var(--sage);
   color: #fbf8f1;
+  font-size: 1.05em;
   text-align: center;
   white-space: pre-line;
 }
