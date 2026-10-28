@@ -21,7 +21,11 @@
     <hr>
 
     <h2>sign up</h2>
-    <p>For <b id="signup-date"></b>.</p>
+    <p>For <b id="signup-date"></b>. <span id="spots" class="muted"></span></p>
+    <p id="full-msg" class="box center" hidden>
+      This Wednesday is full. All six seats are taken.<br>
+      <span class="small muted">Check back next week, or text us to get on the waitlist.</span>
+    </p>
     <form id="signup" class="box">
       <div class="form-row">
         <label for="name">your name</label>
@@ -29,10 +33,7 @@
       </div>
       <div class="form-row">
         <label for="party">party of</label>
-        <select id="party">
-          <option>1</option><option>2</option><option>3</option>
-          <option>4</option><option>5</option><option>6</option>
-        </select>
+        <select id="party"></select>
       </div>
       <div class="form-row">
         <button type="submit" id="signup-btn">count me in</button>
@@ -81,6 +82,32 @@
     });
 
     // ---- sign up ----
+    // Party sizes only go up to the seats still open, and the form hides once it's full.
+    function showSpotsLeft(left) {
+      const form = document.getElementById("signup");
+      const select = document.getElementById("party");
+      const full = left <= 0;
+      form.hidden = full;
+      document.getElementById("full-msg").hidden = !full;
+      document.getElementById("spots").textContent = full ? ""
+        : `${left} ${left === 1 ? "seat" : "seats"} left.`;
+      const chosen = Number(select.value) || 1;
+      select.innerHTML = "";
+      for (let n = 1; n <= Math.max(1, left); n++) select.add(new Option(n, n));
+      select.value = String(Math.min(chosen, Math.max(1, left)));
+    }
+
+    async function refreshSpots() {
+      try {
+        showSpotsLeft(CAPACITY - headcount(await fetchSignups(), WEDNESDAY));
+      } catch (err) {
+        // If the list can't load, leave the form open; the backend still checks capacity.
+      }
+    }
+
+    showSpotsLeft(CAPACITY);
+    refreshSpots();
+
     document.getElementById("signup").addEventListener("submit", async (e) => {
       e.preventDefault();
       const name = document.getElementById("name").value.trim();
@@ -92,9 +119,22 @@
       btn.disabled = true;
       msg.textContent = "sending…";
       try {
-        await addSignup({ wednesday: WEDNESDAY, name, party });
-        msg.textContent = `See you on the water, ${name}! (party of ${party})`;
-        e.target.reset();
+        const result = await addSignup({ wednesday: WEDNESDAY, name, party });
+        if (result.ok) {
+          msg.textContent = `See you on the water, ${name}! (party of ${party})`;
+          e.target.reset();
+        } else if (result.full) {
+          msg.textContent = result.spotsLeft > 0
+            ? `Only ${result.spotsLeft} ${result.spotsLeft === 1 ? "seat is" : "seats are"} left now. Try a smaller party?`
+            : "";
+        } else {
+          throw new Error("rejected");
+        }
+        await refreshSpots();
+        // The full message replaces the form, so carry the confirmation over to it.
+        if (result.ok && document.getElementById("signup").hidden) {
+          document.getElementById("spots").textContent = msg.textContent;
+        }
       } catch (err) {
         msg.textContent = "Something went sideways. Try again, or just text us.";
       } finally {

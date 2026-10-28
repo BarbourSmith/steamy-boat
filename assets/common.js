@@ -4,6 +4,9 @@
 // While this is blank, signups are only saved in your own browser (test mode).
 const SIGNUP_URL = "https://script.google.com/macros/s/AKfycbw1wT-NcX9f3eFeGUPVjZyYntiwkT7LiG5Dr0hy32_AMA6kzHTpfkZxutEQ4lOBZgk/exec";
 
+// Most people aboard on any one Wednesday. Keep in sync with apps-script.gs.
+const CAPACITY = 6;
+
 const GATE_KEY = "steamy-boat-aboard";
 const LOCAL_SIGNUPS_KEY = "steamy-boat-test-signups";
 
@@ -54,21 +57,51 @@ async function fetchSignups() {
   return res.json();
 }
 
-async function addSignup(signup) {
-  const entry = { ...signup, timestamp: new Date().toISOString() };
-  if (testMode()) {
-    const list = readLocalSignups();
-    list.push(entry);
-    localStorage.setItem(LOCAL_SIGNUPS_KEY, JSON.stringify(list));
-    return;
-  }
+function writeLocalSignups(list) {
+  localStorage.setItem(LOCAL_SIGNUPS_KEY, JSON.stringify(list));
+}
+
+// Total people signed up for one Wednesday.
+function headcount(signups, wednesday) {
+  return signups
+    .filter((s) => s.wednesday === wednesday)
+    .reduce((n, s) => n + Number(s.party || 0), 0);
+}
+
+async function postToBackend(body) {
   // text/plain keeps this a "simple" request so Apps Script doesn't need CORS preflight.
   const res = await fetch(SIGNUP_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(entry),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
+// Resolves to { ok: true }, or { ok: false, full: true, spotsLeft } when there isn't room.
+async function addSignup(signup) {
+  const entry = { ...signup, timestamp: new Date().toISOString() };
+  if (testMode()) {
+    const list = readLocalSignups();
+    const spotsLeft = CAPACITY - headcount(list, entry.wednesday);
+    if (entry.party > spotsLeft) return { ok: false, full: true, spotsLeft: Math.max(0, spotsLeft) };
+    list.push(entry);
+    writeLocalSignups(list);
+    return { ok: true };
+  }
+  return postToBackend(entry);
+}
+
+async function deleteSignup(signup) {
+  if (testMode()) {
+    writeLocalSignups(readLocalSignups().filter((s) => s.timestamp !== signup.timestamp));
+    return;
+  }
+  const result = await postToBackend({
+    action: "delete", row: signup.row, name: signup.name, wednesday: signup.wednesday,
+  });
+  if (!result.ok) throw new Error("delete rejected");
 }
 
 function escapeHtml(s) {

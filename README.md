@@ -4,7 +4,9 @@ A small password-gated page for the floating sauna, for friends and family.
 
 - `/` is the landing page. The password is `sauna`. It's a velvet rope, not a lock.
 - `/deck/` has the signup form, the wind forecast for the coming Wednesday at Newport Shores, and the basics.
-- `/stern/` lists who has signed up, grouped by Wednesday.
+- `/stern/` lists who has signed up, grouped by Wednesday, with a remove button for each signup.
+
+Each Wednesday holds 6 people (`CAPACITY` in both `assets/common.js` and `apps-script.gs`). Once it's full, the deck swaps the signup form for a "full" message.
 
 ## Turn on GitHub Pages
 

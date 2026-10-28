@@ -36,27 +36,48 @@
       });
     }
 
+    let signups = [];
+
     function section(date, people, isPast) {
       const total = people.reduce((n, p) => n + Number(p.party || 0), 0);
       const rows = people.map((p) => `<tr>
           <td>${escapeHtml(p.name)}</td>
           <td class="num">${Number(p.party) || ""}</td>
           <td class="small muted">${timeLabel(p.timestamp)}</td>
+          <td><button class="small" data-i="${signups.indexOf(p)}">remove</button></td>
         </tr>`).join("");
+      const full = !isPast && total >= CAPACITY ? " &middot; <b>full</b>" : "";
       return `<h2>${prettyDate(date)}</h2>
-        <p${isPast ? ' class="muted"' : ""}><b>${total}</b> ${total === 1 ? "person" : "people"}
-          across ${people.length} ${people.length === 1 ? "signup" : "signups"}${isPast ? " (past)" : ""}</p>
+        <p${isPast ? ' class="muted"' : ""}><b>${total}</b> of ${CAPACITY} aboard
+          across ${people.length} ${people.length === 1 ? "signup" : "signups"}${isPast ? " (past)" : full}</p>
         <table>
-          <tr><th>name</th><th class="num">party</th><th>signed up</th></tr>
+          <tr><th>name</th><th class="num">party</th><th>signed up</th><th></th></tr>
           ${rows}
         </table>`;
     }
+
+    document.getElementById("list").addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-i]");
+      if (!btn) return;
+      const s = signups[Number(btn.dataset.i)];
+      if (!confirm(`Remove ${s.name} (party of ${s.party}) from ${prettyDate(s.wednesday)}?`)) return;
+      btn.disabled = true;
+      btn.textContent = "removing…";
+      try {
+        await deleteSignup(s);
+        load();
+      } catch (err) {
+        alert("Couldn't remove that one. Refresh and try again.");
+        btn.disabled = false;
+        btn.textContent = "remove";
+      }
+    });
 
     async function load() {
       const el = document.getElementById("list");
       el.textContent = "loading the manifest…";
       try {
-        const signups = await fetchSignups();
+        signups = await fetchSignups();
         if (!signups.length) {
           el.innerHTML = "<p class='center muted'>Nobody yet. The sauna is lonely.</p>";
           return;
