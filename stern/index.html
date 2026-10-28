@@ -36,7 +36,11 @@
       });
     }
 
+    // Past trips older than this drop off the page (they stay in the Sheet).
+    const PAST_DAYS_SHOWN = 28;
+
     let signups = [];
+    let showAllPast = false;
 
     function section(date, people, isPast) {
       const total = people.reduce((n, p) => n + Number(p.party || 0), 0);
@@ -57,6 +61,12 @@
     }
 
     document.getElementById("list").addEventListener("click", async (e) => {
+      if (e.target.id === "show-older") {
+        e.preventDefault();
+        showAllPast = true;
+        load();
+        return;
+      }
       const btn = e.target.closest("button[data-i]");
       if (!btn) return;
       const s = signups[Number(btn.dataset.i)];
@@ -87,11 +97,20 @@
         for (const s of signups) (byDate[s.wednesday] ||= []).push(s);
 
         const today = isoDate(new Date());
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - PAST_DAYS_SHOWN);
         const upcoming = Object.keys(byDate).filter((d) => d >= today).sort();
         const past = Object.keys(byDate).filter((d) => d < today).sort().reverse();
+        // Older trips stay in the Sheet; they're just tucked away here.
+        const recent = showAllPast ? past : past.filter((d) => d >= isoDate(cutoff));
+        const hidden = past.length - recent.length;
 
-        el.innerHTML = upcoming.map((d) => section(d, byDate[d], false)).join("")
-          + (past.length ? "<hr>" + past.map((d) => section(d, byDate[d], true)).join("") : "");
+        el.innerHTML = (upcoming.length
+            ? upcoming.map((d) => section(d, byDate[d], false)).join("")
+            : "<p class='center muted'>No upcoming signups yet.</p>")
+          + (recent.length ? "<hr>" + recent.map((d) => section(d, byDate[d], true)).join("") : "")
+          + (hidden ? `<p class="center small muted">${hidden} older ${hidden === 1 ? "trip" : "trips"} hidden.
+              <a href="#" id="show-older">show</a></p>` : "");
       } catch (err) {
         el.textContent = "Couldn't load signups. Check SIGNUP_URL, or try again.";
       }
