@@ -3,7 +3,8 @@
 A small password-gated page for the floating sauna, for friends and family.
 
 - `/` is the landing page. The password is `sauna`. It's a velvet rope, not a lock.
-- `/deck/` has the signup form, the wind forecast for the coming Wednesday at Newport Shores, and the basics.
+- `/deck/` has the signup form and the wind forecast for the coming Wednesday at Newport Shores.
+- `/about/` has the basics: when, where, and what to bring.
 - `/stern/` lists who has signed up, grouped by Wednesday, with a remove button for each signup.
 
 Each Wednesday holds 6 people (`CAPACITY` in both `assets/common.js` and `apps-script.gs`). Once it's full, the deck swaps the signup form for a "full" message.
@@ -27,5 +28,6 @@ If you change `apps-script.gs` later, use **Deploy → Manage deployments → Ed
 
 ## Editing
 
-- The "the basics" list is plain HTML near the bottom of `deck/index.html`.
+- The "the basics" list is plain HTML in `about/index.html`.
+- After changing anything in `assets/`, bump the `?v=` number on the links in every page. GitHub Pages lets browsers cache files for 10 minutes, and without the bump a visitor can get the new page with an old script.
 - Forecast data comes from [Open-Meteo](https://open-meteo.com/), which is free and needs no key.
