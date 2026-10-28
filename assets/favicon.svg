@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="45%" r="60%">
+      <stop offset="0" stop-color="#ffd27a"/>
+      <stop offset="1" stop-color="#e0822f"/>
+    </radialGradient>
+  </defs>
+  <!-- cream tile so the icon reads on light and dark tab bars -->
+  <rect width="64" height="64" rx="14" fill="#f5efe3"/>
+  <!-- steam -->
+  <path d="M36 11c-3-3 3-5 0-8M42 12c-3-3 3-5 0-8" fill="none" stroke="#6f8f78" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- chimney -->
+  <rect x="35" y="12" width="5" height="9" fill="#3b2e25"/>
+  <!-- barrel sauna: dark shell, cedar ring, glowing round window -->
+  <circle cx="32" cy="33" r="16" fill="#3b2e25"/>
+  <circle cx="32" cy="33" r="12.5" fill="#b9814f"/>
+  <circle cx="32" cy="33" r="9.5" fill="url(#glow)"/>
+  <!-- float deck -->
+  <rect x="7" y="47" width="50" height="6" rx="1.5" fill="#3b2e25"/>
+  <!-- lake -->
+  <path d="M0 55c5-3 9 3 14 0s9 3 14 0 9 3 14 0 9 3 14 0 6 3 8 0v9H0z" fill="#2f6074"/>
+</svg>
