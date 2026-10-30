@@ -5,7 +5,7 @@
 const SIGNUP_URL = "https://script.google.com/macros/s/AKfycbw1wT-NcX9f3eFeGUPVjZyYntiwkT7LiG5Dr0hy32_AMA6kzHTpfkZxutEQ4lOBZgk/exec";
 
 // Most people aboard on any one Wednesday. Keep in sync with apps-script.gs.
-const CAPACITY = 6;
+const CAPACITY = 4;
 
 const GATE_KEY = "steamy-boat-aboard";
 const LOCAL_SIGNUPS_KEY = "steamy-boat-test-signups";

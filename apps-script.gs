@@ -8,7 +8,7 @@
 //   timestamp | wednesday | name | party
 
 // Most people aboard on any one Wednesday. Keep in sync with assets/common.js.
-const CAPACITY = 6;
+const CAPACITY = 4;
 
 function sheet_() {
   return SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];

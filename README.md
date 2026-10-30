@@ -7,7 +7,7 @@ A small password-gated page for the floating sauna, for friends and family.
 - `/about/` has the basics: when, where, and what to bring.
 - `/stern/` lists who has signed up, grouped by Wednesday, with a remove button for each signup.
 
-Each Wednesday holds 6 people (`CAPACITY` in both `assets/common.js` and `apps-script.gs`). Once it's full, the deck swaps the signup form for a "full" message.
+Each Wednesday holds 4 people (`CAPACITY` in both `assets/common.js` and `apps-script.gs`). Once it's full, the deck swaps the signup form for a "full" message.
 
 ## Turn on GitHub Pages
 
