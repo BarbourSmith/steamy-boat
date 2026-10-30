@@ -6,11 +6,11 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Steam Ship · deck</title>
   <!-- Bump ?v= when assets change, so browsers don't mix a cached old file with a new page. -->
-  <link rel="stylesheet" href="../assets/style.css?v=5">
+  <link rel="stylesheet" href="../assets/style.css?v=6">
   <link rel="icon" href="../assets/favicon.svg?v=2" type="image/svg+xml">
   <link rel="icon" href="../assets/favicon-32.png?v=2" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=2">
-  <script src="../assets/common.js?v=6"></script>
+  <script src="../assets/common.js?v=7"></script>
   <script>requireAboard();</script>
 </head>
 <body>
@@ -68,11 +68,11 @@
 
     // ---- announcement ----
     // Set from /stern; the bar stays hidden when it's blank or can't load.
-    fetchAnnouncement().then((text) => {
+    function showAnnouncement(text) {
       const bar = document.getElementById("announce");
       bar.textContent = text;
       bar.hidden = !text.trim();
-    }).catch(() => {});
+    }
 
     // ---- sign up ----
     // Party sizes only go up to the seats still open, and the form hides once it's full.
@@ -90,15 +90,18 @@
       select.value = String(Math.min(chosen, Math.max(1, left)));
     }
 
+    // The seat count is set from /stern, so it comes along with the announcement.
     async function refreshSpots() {
       try {
-        showSpotsLeft(CAPACITY - headcount(await fetchSignups(), WEDNESDAY));
+        const [list, settings] = await Promise.all([fetchSignups(), fetchSettings()]);
+        showAnnouncement(settings.announcement);
+        showSpotsLeft(settings.capacity - headcount(list, WEDNESDAY));
       } catch (err) {
         // If the list can't load, leave the form open; the backend still checks capacity.
       }
     }
 
-    showSpotsLeft(CAPACITY);
+    showSpotsLeft(DEFAULT_CAPACITY);
     // Don't promise a number until the real count arrives.
     document.getElementById("spots").textContent = "? seats left.";
     refreshSpots();

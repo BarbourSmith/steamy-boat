@@ -4,12 +4,14 @@
 // While this is blank, signups are only saved in your own browser (test mode).
 const SIGNUP_URL = "https://script.google.com/macros/s/AKfycbw1wT-NcX9f3eFeGUPVjZyYntiwkT7LiG5Dr0hy32_AMA6kzHTpfkZxutEQ4lOBZgk/exec";
 
-// Most people aboard on any one Wednesday. Keep in sync with apps-script.gs.
-const CAPACITY = 4;
+// Most people aboard on any one Wednesday until /stern sets a number.
+// Keep in sync with DEFAULT_CAPACITY in apps-script.gs.
+const DEFAULT_CAPACITY = 4;
 
 const GATE_KEY = "steamy-boat-aboard";
 const LOCAL_SIGNUPS_KEY = "steamy-boat-test-signups";
 const LOCAL_ANNOUNCEMENT_KEY = "steamy-boat-test-announcement";
+const LOCAL_CAPACITY_KEY = "steamy-boat-test-capacity";
 
 function isAboard() {
   try { return localStorage.getItem(GATE_KEY) === "yes"; } catch (e) { return false; }
@@ -85,7 +87,7 @@ async function addSignup(signup) {
   const entry = { ...signup, timestamp: new Date().toISOString() };
   if (testMode()) {
     const list = readLocalSignups();
-    const spotsLeft = CAPACITY - headcount(list, entry.wednesday);
+    const spotsLeft = readLocalCapacity() - headcount(list, entry.wednesday);
     if (entry.party > spotsLeft) return { ok: false, full: true, spotsLeft: Math.max(0, spotsLeft) };
     list.push(entry);
     writeLocalSignups(list);
@@ -105,12 +107,20 @@ async function deleteSignup(signup) {
   if (!result.ok) throw new Error("delete rejected");
 }
 
-// The announcement shown at the top of the deck. Blank means no announcement.
-async function fetchAnnouncement() {
-  if (testMode()) return localStorage.getItem(LOCAL_ANNOUNCEMENT_KEY) || "";
-  const res = await fetch(SIGNUP_URL + "?announcement=1");
+function readLocalCapacity() {
+  try { return Number(localStorage.getItem(LOCAL_CAPACITY_KEY)) || DEFAULT_CAPACITY; } catch (e) { return DEFAULT_CAPACITY; }
+}
+
+// Resolves to { announcement, capacity }, both set from /stern.
+// A blank announcement means none is shown.
+async function fetchSettings() {
+  if (testMode()) {
+    return { announcement: localStorage.getItem(LOCAL_ANNOUNCEMENT_KEY) || "", capacity: readLocalCapacity() };
+  }
+  const res = await fetch(SIGNUP_URL + "?settings=1");
   if (!res.ok) throw new Error("HTTP " + res.status);
-  return (await res.json()).announcement || "";
+  const s = await res.json();
+  return { announcement: s.announcement || "", capacity: Number(s.capacity) || DEFAULT_CAPACITY };
 }
 
 async function setAnnouncement(text) {
@@ -120,6 +130,15 @@ async function setAnnouncement(text) {
   }
   const result = await postToBackend({ action: "announce", text });
   if (!result.ok) throw new Error("announcement rejected");
+}
+
+async function setCapacity(n) {
+  if (testMode()) {
+    localStorage.setItem(LOCAL_CAPACITY_KEY, String(n));
+    return;
+  }
+  const result = await postToBackend({ action: "capacity", capacity: n });
+  if (!result.ok) throw new Error("capacity rejected");
 }
 
 function escapeHtml(s) {

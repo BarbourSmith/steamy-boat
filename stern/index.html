@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Steam Ship · stern</title>
-  <link rel="stylesheet" href="../assets/style.css?v=5">
+  <link rel="stylesheet" href="../assets/style.css?v=6">
   <link rel="icon" href="../assets/favicon.svg?v=2" type="image/svg+xml">
   <link rel="icon" href="../assets/favicon-32.png?v=2" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=2">
-  <script src="../assets/common.js?v=6"></script>
+  <script src="../assets/common.js?v=7"></script>
   <script>requireAboard();</script>
 </head>
 <body>
@@ -33,6 +33,16 @@
       </div>
     </form>
 
+    <h2>seats</h2>
+    <form id="seats-form" class="box">
+      <div class="form-row">
+        <label for="seats">seats per trip</label>
+        <input id="seats" type="number" min="1" max="50" step="1" required disabled>
+        <button type="submit" id="seats-save">save</button>
+        <span id="seats-msg" class="small muted"></span>
+      </div>
+    </form>
+
     <hr>
 
     <div id="list">loading the manifest&hellip;</div>
@@ -45,18 +55,32 @@
   <script>
     document.getElementById("test-mode").hidden = !testMode();
 
-    // ---- announcement ----
+    // ---- announcement & seats ----
     const announceText = document.getElementById("announce-text");
     const announceMsg = document.getElementById("announce-msg");
+    const seatsInput = document.getElementById("seats");
+    const seatsMsg = document.getElementById("seats-msg");
 
-    async function loadAnnouncement() {
+    // Seats per trip; the manifest shows "x of capacity aboard" with it.
+    let capacity = DEFAULT_CAPACITY;
+
+    async function loadSettings() {
       try {
-        announceText.value = await fetchAnnouncement();
+        const settings = await fetchSettings();
+        announceText.value = settings.announcement;
         announceText.placeholder = "nothing posted";
         announceText.disabled = false;
+        seatsInput.value = settings.capacity;
+        seatsInput.disabled = false;
+        // The manifest may already be up with the default count; redraw it with the real one.
+        if (settings.capacity !== capacity) {
+          capacity = settings.capacity;
+          load();
+        }
       } catch (err) {
         announceText.placeholder = "";
         announceMsg.textContent = "Couldn't load the announcement.";
+        seatsMsg.textContent = "Couldn't load the seat count.";
       }
     }
 
@@ -77,7 +101,21 @@
     });
     document.getElementById("announce-clear").addEventListener("click", () => saveAnnouncement(""));
 
-    loadAnnouncement();
+    document.getElementById("seats-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const n = Number(seatsInput.value);
+      seatsMsg.textContent = "saving…";
+      try {
+        await setCapacity(n);
+        capacity = n;
+        seatsMsg.textContent = "Saved.";
+        load();
+      } catch (err) {
+        seatsMsg.textContent = "Couldn't save. Try again.";
+      }
+    });
+
+    loadSettings();
 
     function timeLabel(iso) {
       const d = new Date(iso);
@@ -100,9 +138,9 @@
           <td class="small muted">${timeLabel(p.timestamp)}</td>
           <td><button class="small" data-i="${signups.indexOf(p)}">remove</button></td>
         </tr>`).join("");
-      const full = !isPast && total >= CAPACITY ? " &middot; <b>full</b>" : "";
+      const full = !isPast && total >= capacity ? " &middot; <b>full</b>" : "";
       return `<h2>${prettyDate(date)}</h2>
-        <p${isPast ? ' class="muted"' : ""}><b>${total}</b> of ${CAPACITY} aboard
+        <p${isPast ? ' class="muted"' : ""}><b>${total}</b> of ${capacity} aboard
           across ${people.length} ${people.length === 1 ? "signup" : "signups"}${isPast ? " (past)" : full}</p>
         <table>
           <tr><th>name</th><th class="num">party</th><th>signed up</th><th></th></tr>

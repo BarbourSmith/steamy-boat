@@ -7,8 +7,9 @@
 // Setup steps are in README.md. Each signup becomes a row in the sheet:
 //   timestamp | wednesday | name | party
 
-// Most people aboard on any one Wednesday. Keep in sync with assets/common.js.
-const CAPACITY = 4;
+// Most people aboard on any one Wednesday until /stern sets a number.
+// Keep in sync with DEFAULT_CAPACITY in assets/common.js.
+const DEFAULT_CAPACITY = 4;
 
 function sheet_() {
   return SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
@@ -49,10 +50,18 @@ function readAnnouncement_() {
   return PropertiesService.getScriptProperties().getProperty("announcement") || "";
 }
 
-// ?announcement=1 returns { announcement }; otherwise the signup list.
+// Most people aboard on any one Wednesday, set from /stern.
+function readCapacity_() {
+  const n = Number(PropertiesService.getScriptProperties().getProperty("capacity"));
+  return n >= 1 ? n : DEFAULT_CAPACITY;
+}
+
+// ?settings=1 (or the older ?announcement=1) returns { announcement, capacity };
+// otherwise the signup list.
 function doGet(e) {
-  if (e && e.parameter && e.parameter.announcement) {
-    return json_({ announcement: readAnnouncement_() });
+  const p = (e && e.parameter) || {};
+  if (p.settings || p.announcement) {
+    return json_({ announcement: readAnnouncement_(), capacity: readCapacity_() });
   }
   return json_(readSignups_());
 }
@@ -64,6 +73,7 @@ function doPost(e) {
   lock.waitLock(10000);
   try {
     if (d.action === "announce") return setAnnouncement_(d);
+    if (d.action === "capacity") return setCapacity_(d);
     return d.action === "delete" ? deleteSignup_(d) : addSignup_(d);
   } finally {
     lock.releaseLock();
@@ -71,15 +81,16 @@ function doPost(e) {
 }
 
 function addSignup_(d) {
-  const party = Math.min(CAPACITY, Math.max(1, Number(d.party) || 1));
+  const capacity = readCapacity_();
+  const party = Math.min(capacity, Math.max(1, Number(d.party) || 1));
   const name = String(d.name || "").slice(0, 60);
   if (!name || !/^\d{4}-\d{2}-\d{2}$/.test(d.wednesday)) return json_({ ok: false });
 
   const aboard = readSignups_()
     .filter((s) => s.wednesday === d.wednesday)
     .reduce((n, s) => n + s.party, 0);
-  if (aboard + party > CAPACITY) {
-    return json_({ ok: false, full: true, spotsLeft: Math.max(0, CAPACITY - aboard) });
+  if (aboard + party > capacity) {
+    return json_({ ok: false, full: true, spotsLeft: Math.max(0, capacity - aboard) });
   }
 
   const sh = sheet_();
@@ -105,4 +116,11 @@ function setAnnouncement_(d) {
   const text = String(d.text || "").trim().slice(0, 500);
   PropertiesService.getScriptProperties().setProperty("announcement", text);
   return json_({ ok: true, announcement: text });
+}
+
+function setCapacity_(d) {
+  const n = Math.round(Number(d.capacity));
+  if (!(n >= 1 && n <= 50)) return json_({ ok: false });
+  PropertiesService.getScriptProperties().setProperty("capacity", String(n));
+  return json_({ ok: true, capacity: n });
 }
