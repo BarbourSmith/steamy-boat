@@ -120,7 +120,6 @@
       const btn = e.target.closest("button[data-i]");
       if (!btn) return;
       const s = signups[Number(btn.dataset.i)];
-      if (!confirm(`Remove ${s.name} (party of ${s.party}) from ${prettyDate(s.wednesday)}?`)) return;
       btn.disabled = true;
       btn.textContent = "removing…";
       try {
